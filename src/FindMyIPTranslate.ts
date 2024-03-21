@@ -19,28 +19,24 @@ function convertLang(src: string) {
     return src.toLocaleUpperCase();
 }
 
-interface Response {
-    translations: {
-        'detected_source_language': string;
-        text: string;
-    }[];
-}
-
 export class FindMyIPTranslate implements ITranslate {
     get maxLen(): number {
         return 3000;
     }
 
     async translate(content: string, { to = 'auto' }: ITranslateOptions) {
-        const url = `https://findmyip.net/api/translate.php`;
         const data = {
             'text': content,
             'target_lang': convertLang(to)
         };
+        const url = `https://findmyip.net/api/translate.php?${querystring.stringify(data)}`;
 
-        let res = await axios.post<Response>(url,querystring.stringify(data));
+        let res = await axios.get(url);
 
-        return res.data.translations[0].text;
+        if (res.data.code !== 200) {
+            throw new Error(res.data.error);
+        }
+        return res.data.data.translate_result;
     }
 
 
@@ -53,8 +49,3 @@ export class FindMyIPTranslate implements ITranslate {
         return true;
     }
 }
-
-
-
-
-
